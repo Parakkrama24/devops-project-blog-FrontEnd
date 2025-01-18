@@ -1,5 +1,5 @@
 import React from "react";
-import LoginCard from "../components/login/logincard";
+import LoginCard from "../components/login/PopupCard";
 
 export default function Login() {
   return (

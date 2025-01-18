@@ -20,3 +20,20 @@
   gap: 2rem;
   padding-right: 3rem;
 }
+
+.nav-item {
+  text-decoration: none;
+  color: #546e89;
+  font-size: 1rem;
+  padding-bottom: 0.5rem;
+  transition: all 0.3s ease;
+}
+
+.nav-item:hover {
+  color: #ff6347;
+}
+
+.nav-item.active {
+  border-bottom: 2px solid #ff6347; /* Underline for the active link */
+  color: #ff6347;
+}
