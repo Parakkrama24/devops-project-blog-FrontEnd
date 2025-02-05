@@ -13,6 +13,7 @@ export default function HeroSection() {
           your needs, immersive virtual experiences, and breakthroughs that
           redefine innovation—all at your fingertips.
         </p>
+        
         <button className="read-more">Read more</button>
       </div>
       <div className="hero-image">
