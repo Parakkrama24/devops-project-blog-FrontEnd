@@ -32,7 +32,7 @@ export default function Navbar() {
         </li>
         <li>
           <NavLink
-            to="#"
+            to="/login"
             className="nav-item"
             onClick={(e) => handleNavClick(e, "SignUp")}
           >
@@ -41,7 +41,7 @@ export default function Navbar() {
         </li>
         <li>
           <NavLink
-            to="#"
+            to="/signup"
             className="nav-item"
             onClick={(e) => handleNavClick(e, "Login")}
           >

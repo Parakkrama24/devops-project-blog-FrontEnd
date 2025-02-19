@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { useNavigate } from "react-router-dom"; // Import useNavigate
 import axios from "axios";
 import "./PopupCard.css";
 
@@ -8,6 +9,8 @@ export default function PopupCard({ type, onClose }) {
     email: "",
     password: "",
   });
+
+  const navigate = useNavigate(); // Initialize useNavigate
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.id]: e.target.value });
@@ -21,8 +24,23 @@ export default function PopupCard({ type, onClose }) {
         type === "SignUp"
           ? "http://localhost:7070/auth/signup"
           : "http://localhost:7070/auth/sign-in";
+
       const response = await axios.post(endpoint, formData);
+
       alert(response.data.message);
+
+      if (type === "Login") {
+        // Store token (if received from backend)
+        if (response.data.token) {
+          localStorage.setItem("authToken", response.data.token);
+        }
+        // Navigate to Dashboard after login
+        navigate("/dashboard");
+      } else {
+        // Stay on signup page after signup
+        navigate("/signup");
+      }
+
       onClose();
     } catch (error) {
       alert(error.response?.data?.message || "Failed to submit");
@@ -46,6 +64,7 @@ export default function PopupCard({ type, onClose }) {
                 placeholder="Enter your name"
                 value={formData.name}
                 onChange={handleChange}
+                required
               />
             </div>
           )}
@@ -57,6 +76,7 @@ export default function PopupCard({ type, onClose }) {
               placeholder="Enter your email"
               value={formData.email}
               onChange={handleChange}
+              required
             />
           </div>
           <div className="form-group">
@@ -67,6 +87,7 @@ export default function PopupCard({ type, onClose }) {
               placeholder="Enter your password"
               value={formData.password}
               onChange={handleChange}
+              required
             />
           </div>
           <button type="submit" className="submit-button">
