@@ -1,5 +1,5 @@
 pipeline {
-    agent { label 'any' }  //  Corrected syntax
+    agent any
 
     environment {
         DOCKER_HUB_USER = 'your_dockerhub_username'
@@ -35,6 +35,6 @@ pipeline {
             }
         }
 
-     
+        
     }
 }
