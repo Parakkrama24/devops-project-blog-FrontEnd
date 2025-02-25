@@ -35,11 +35,16 @@ pipeline {
             }
         }
 
-
-        stage('Push Image to Docker Hub') {
+         stage('Login to Docker Hub') {
             steps {
-                sh 'echo $DOCKER_HUB_PASS | docker login -u $DOCKER_HUB_USER --password-stdin'
-                sh "docker push $IMAGE_NAME:latest"
+                script {
+                    bat label: 'Docker Login', script: "docker login -u %DOCKER_HUB_USER% -p %DOCKER_HUB_PASS%"
+                }
+            }
+         }
+              stage('Push Image') {
+            steps {
+                bat 'docker push %DOCKER_HUB_USER%/%IMAGE_NAME%:%BUILD_NUMBER%'
             }
         }
 
