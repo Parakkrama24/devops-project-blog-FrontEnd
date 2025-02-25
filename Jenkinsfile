@@ -1,6 +1,5 @@
- stage('Checkout Code') {
-
-     agent any
+pipeline {
+    agent { label 'any' }  //  Corrected syntax
 
     environment {
         DOCKER_HUB_USER = 'your_dockerhub_username'
@@ -10,8 +9,11 @@
         SERVER_USER = 'your_server_user'
         SERVER_HOST = 'your_server_ip'
     }
+
+    stages {
+        stage('Checkout Code') {
             steps {
-                git branch: 'deops_1', url: 'https://github.com/your-username/your-frontend-repo.git'
+                git branch: 'main', url: 'https://github.com/your-username/your-frontend-repo.git'
             }
         }
 
@@ -32,3 +34,7 @@
                 sh "docker build -t $IMAGE_NAME:latest ."
             }
         }
+
+     
+    }
+}
