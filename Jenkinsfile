@@ -10,6 +10,10 @@ pipeline {
         SERVER_HOST = 'Para123##'
     }
 
+    triggers {
+        githubPush()  // Automatically trigger on GitHub push events
+    }
+
     stages {
         stage('Checkout Code') {
             steps {
