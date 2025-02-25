@@ -19,19 +19,19 @@ pipeline {
 
         stage('Install Dependencies') {
             steps {
-                powershell "npm install"
+                powershell 'npm install'
             }
         }
 
         stage('Build React App') {
             steps {
-                powershell "npm run build"
+                powershell 'npm run build'
             }
         }
 
         stage('Build Docker Image') {
             steps {
-                powershell "docker build -t $env:IMAGE_NAME:latest ."
+                powershell "docker build -t ${env.IMAGE_NAME}:latest ."
             }
         }
     }
