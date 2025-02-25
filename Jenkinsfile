@@ -31,36 +31,33 @@ pipeline {
 
         stage('Build Docker Image') {
             steps {
-                powershell "docker build -t ${env.IMAGE_NAME}:latest ."
-            }
-        }
-
-         stage('Login to Docker Hub') {
-            steps {
                 script {
-                    bat label: 'Docker Login', script: "docker login -u %DOCKER_HUB_USER% -p %DOCKER_HUB_PASS%"
+                    def imageTag = "${env.IMAGE_NAME}:${env.BUILD_NUMBER}"
+                    def latestTag = "${env.IMAGE_NAME}:latest"
+                    
+                    bat "docker build -t ${imageTag} -t ${latestTag} ."
                 }
             }
-         }
-              stage('Push Image') {
+        }
+
+        stage('Login to Docker Hub') {
             steps {
-                bat 'docker push %DOCKER_HUB_USER%/%IMAGE_NAME%:%BUILD_NUMBER%'
+                script {
+                    bat "docker login -u %DOCKER_HUB_USER% -p %DOCKER_HUB_PASS%"
+                }
             }
         }
 
-        // stage('Deploy on Server') {
-        //     steps {
-        //         sshagent(['your-ssh-key']) {
-        //             sh """
-        //             ssh $SERVER_USER@$SERVER_HOST '
-        //                 docker pull $IMAGE_NAME:latest &&
-        //                 docker stop $CONTAINER_NAME || true &&
-        //                 docker rm $CONTAINER_NAME || true &&
-        //                 docker run -d --name $CONTAINER_NAME -p 3000:80 $IMAGE_NAME:latest
-        //             '
-        //             """
-        //         }
-        //     }
-        // }
+        stage('Push Image') {
+            steps {
+                script {
+                    def imageTag = "${env.IMAGE_NAME}:${env.BUILD_NUMBER}"
+                    def latestTag = "${env.IMAGE_NAME}:latest"
+
+                    bat "docker push ${imageTag}"
+                    bat "docker push ${latestTag}"
+                }
+            }
+        }
     }
 }
