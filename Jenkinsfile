@@ -20,13 +20,7 @@ pipeline {
             }
         }
 
-        stage('Install Dependencies') {
-            steps {
-                sh '''
-                    npm install
-                '''
-            }
-        }
+      
 
         stage('Build React App') {
             steps {
