@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react'
-import ArticleCard from './articleCard';
+import ArticleCard from './ArticleCard';
 
 const ArticleList = () => {
 
