@@ -67,21 +67,6 @@ pipeline {
             }
         }
 
-        stage('Deploy to Server') {
-            steps {
-                script {
-                    sshagent(['aws-ssh-key']) {
-                        sh """
-                            ssh -o StrictHostKeyChecking=no ${SERVER_USER}@${SERVER_HOST} << EOF
-                            docker pull ${IMAGE_NAME}:latest
-                            docker stop ${CONTAINER_NAME} || true
-                            docker rm ${CONTAINER_NAME} || true
-                            docker run -d --name ${CONTAINER_NAME} -p 3000:3000 ${IMAGE_NAME}:latest
-                            EOF
-                        """
-                    }
-                }
-            }
-        }
+ 
     }
 }
