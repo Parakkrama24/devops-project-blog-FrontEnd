@@ -5,12 +5,12 @@ pipeline {
         DOCKER_HUB_USER = 'parakkrama'
         IMAGE_NAME = 'parakkrama/frontend'
         CONTAINER_NAME = 'react_frontend'
-        SERVER_USER = 'ubuntu'  // Change to your actual Ubuntu user
-        SERVER_HOST = 'your.server.ip' // Replace with AWS EC2 IP
+        SERVER_USER = 'ubuntu'
+        SERVER_HOST = 'your.server.ip'
     }
 
     triggers {
-        githubPush()  // Trigger on GitHub push events
+        githubPush()
     }
 
     stages {
@@ -20,51 +20,19 @@ pipeline {
             }
         }
 
-        stage('Install Dependencies') {
-            steps {
-                sh '''
-                    rm -rf node_modules package-lock.json
-                    npm cache clean --force
-                    npm install
-                '''
-            }
-        }
-
-        stage('Build React App') {
-            steps {
-                sh 'npm run build'
-            }
-        }
-
-        stage('Build Docker Image') {
+        stage('Build & Push Docker Image') {
             steps {
                 script {
-                    def imageTag = "${env.IMAGE_NAME}:${env.BUILD_NUMBER}"
                     def latestTag = "${env.IMAGE_NAME}:latest"
 
-                    sh "docker build -t ${imageTag} -t ${latestTag} ."
-                }
-            }
-        }
-
-        stage('Login to Docker Hub') {
-            steps {
-                script {
                     withCredentials([string(credentialsId: 'docker-hub-password', variable: 'DOCKER_HUB_PASS')]) {
                         sh "echo ${DOCKER_HUB_PASS} | docker login -u ${DOCKER_HUB_USER} --password-stdin"
                     }
-                }
-            }
-        }
 
-        stage('Push Image') {
-            steps {
-                script {
-                    def imageTag = "${env.IMAGE_NAME}:${env.BUILD_NUMBER}"
-                    def latestTag = "${env.IMAGE_NAME}:latest"
-
-                    sh "docker push ${imageTag}"
-                    sh "docker push ${latestTag}"
+                    sh """
+                        docker build -t ${latestTag} .
+                        docker push ${latestTag}
+                    """
                 }
             }
         }
