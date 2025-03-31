@@ -1,0 +1,45 @@
+version: "3.8"
+
+services:
+  vite:
+    image: parakkrama/frontend
+    container_name: vite-container
+    ports:
+      - "3000:3000"
+    networks:
+      - my-network
+    depends_on:
+      - spring-boot
+      - mysql
+  mysql:
+    image: mysql:8.0
+    container_name: mysql-container
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: "19299"
+      MYSQL_DATABASE: "blog"
+    ports:
+      - "3306:3306"
+    networks:
+      - my-network
+
+  spring-boot:
+    image: parakkrama/blog-backend:41
+    container_name: spring-boot-container
+    restart: always
+    ports:
+      - "7070:7070"
+    environment:
+      MYSQL_HOST: mysql
+      MYSQL_PORT: 3306
+      MYSQL_DB_NAME: blog
+      MYSQL_USER: root
+      MYSQL_PASSWORD: 19299
+    networks:
+      - my-network
+    depends_on:
+      - mysql
+
+networks:
+  my-network:
+    driver: bridge
