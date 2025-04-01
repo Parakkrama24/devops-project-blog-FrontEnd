@@ -67,18 +67,19 @@ $jenkins_ip ansible_ssh_user=ubuntu ansible_ssh_private_key_file=$SSH_KEY_PATH
             }
         }
 
-        stage('Install Docker on EC2') {
-            steps {
-                script {
-                    sh '''
-                cd ~/ansible
-                ansible-playbook -i inventory.ini \
-                    --private-key=$SSH_KEY_PATH \
-                    playbook.yml
-                '''
-                }
-            }
+     stage('Install Docker on EC2') {
+    steps {
+        script {
+            sh '''
+            cd $WORKSPACE  # Ensure you are in the correct directory
+            ansible-playbook -i inventory.ini \
+                --private-key=$SSH_KEY_PATH \
+                playbook.yml
+            '''
         }
+    }
+}
+
 
         stage('Checkout Code') {
             steps {
