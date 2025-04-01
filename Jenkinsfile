@@ -33,6 +33,21 @@ pipeline {
         }
 
 
+ stage('Install Docker on EC2') {
+    steps {
+        script {
+            withCredentials([sshUserPrivateKey(credentialsId: 'main_pem', keyFileVariable: 'SSH_KEY')]) {
+                sh '''
+                cd ~/ansible
+                ansible-playbook -i inventory.ini \
+                    --private-key=$SSH_KEY \
+                    playbook.yml
+                '''
+            }
+        }
+    }
+}
+
 
         stage('Checkout Code') {
             steps {
