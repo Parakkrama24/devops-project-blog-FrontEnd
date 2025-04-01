@@ -89,7 +89,7 @@ $jenkins_ip ansible_ssh_user=ubuntu ansible_ssh_private_key_file=$SSH_KEY_PATH
             export ANSIBLE_HOST_KEY_CHECKING=False
 
             ansible-playbook -i inventory.ini \
-                --private-key= $WORKSPACE/jenkinsKey.pem \
+                --private-key=$WORKSPACE/jenkinsKey.pem \
                 playbook.yml
             '''
         }
