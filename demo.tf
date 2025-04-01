@@ -17,7 +17,7 @@ provider "aws" {
 # Jenkins EC2 Instance
 # -----------------------------
 resource "aws_instance" "jenkins_server" {
-  ami             = "ami-0b0ea68c435eb488d"
+  ami             = "ami-084568db4383264d4"
   instance_type   = "t2.micro"
   key_name        = "jenkinsKey"
   security_groups = [aws_security_group.jenkins_sg.name, aws_security_group.mysql_sg.name]
@@ -25,17 +25,19 @@ resource "aws_instance" "jenkins_server" {
   user_data = <<-EOF
   #!/bin/bash
   sudo apt update -y
-  sudo apt install -y openjdk-17-jdk
-  wget -O - https://pkg.jenkins.io/debian/jenkins.io.key | sudo tee /usr/share/keyrings/jenkins-keyring.asc
-  echo "deb [signed-by=/usr/share/keyrings/jenkins-keyring.asc] https://pkg.jenkins.io/debian binary/" | sudo tee /etc/apt/sources.list.d/jenkins.list
+
+  # Install Python 3.12
+  sudo add-apt-repository -y ppa:deadsnakes/ppa
   sudo apt update -y
-  sudo apt install -y jenkins
-  sudo systemctl start jenkins
-  sudo systemctl enable jenkins
+  sudo apt install -y python3.12 python3.12-venv python3.12-dev
+  sudo update-alternatives --config python3 <<< "1"
+
+  # Verify installation
+  python3 --version
   EOF
 
   tags = {
-    Name = "Jenkins-Server"
+    Name = "Python-Server"
   }
 }
 
