@@ -10,7 +10,7 @@ pipeline {
 
         AWS_ACCESS_KEY = credentials('aws_access_key')   // Jenkins credential ID for access key
         AWS_SECRET_KEY = credentials('aws_seacret_key')  // Jenkins credential ID for secret key
-        SSH_KEY_PATH = '/root/jenkinsKey.pem' // Ensure correct path to the .pem file
+        //SSH_KEY_PATH = '/root/jenkinsKey.pem' // Ensure correct path to the .pem file
     }
 
     triggers {
@@ -19,6 +19,16 @@ pipeline {
 
     stages {
 
+         stage('Copy Secret File') {
+            steps {
+                script {
+                    withCredentials([file(credentialsId: 'main_pem', variable: 'PEM_FILE')]) {
+                        sh 'cp $PEM_FILE $WORKSPACE/jenkinsKey.pem'
+                        sh 'chmod 600 $WORKSPACE/jenkinsKey.pem'
+                    }
+                }
+            }
+         }
         stage('Terraform Init') {
             steps {
                 script {
@@ -76,7 +86,7 @@ $jenkins_ip ansible_ssh_user=ubuntu ansible_ssh_private_key_file=$SSH_KEY_PATH
             export ANSIBLE_HOST_KEY_CHECKING=False
 
             ansible-playbook -i inventory.ini \
-                --private-key=$SSH_KEY_PATH \
+                --private-key= $WORKSPACE/jenkinsKey.pem \
                 playbook.yml
             '''
         }
