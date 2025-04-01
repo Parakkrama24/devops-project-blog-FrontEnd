@@ -34,16 +34,16 @@ pipeline {
 
         // Terraform Apply
       stage('Terraform Apply') {
-            steps {
-                script {
-                    sh '''
-                    export AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY
-                    export AWS_SECRET_ACCESS_KEY=$AWS_SECRET_KEY
-                    terraform apply -auto-approve
-                    '''
-                }
-            }
+    steps {
+        script {
+            sh '''
+            terraform apply -auto-approve \
+              -var="AWS_ACCESS_KEY=$AWS_ACCESS_KEY" \
+              -var="AWS_SECRET_KEY=$AWS_SECRET_KEY"
+            '''
         }
+    }
+}
 
 
  stage('Install Docker on EC2') {
