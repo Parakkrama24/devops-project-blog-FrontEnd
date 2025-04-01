@@ -7,6 +7,10 @@ pipeline {
         CONTAINER_NAME = 'react_frontend'
         SERVER_USER = 'ubuntu'  // Change to your actual Ubuntu user
         SERVER_HOST = 'your.server.ip' // Replace with AWS EC2 IP
+
+         AWS_ACCESS_KEY = credentials('aws_access_key')   // Jenkins credential ID for access key
+        AWS_SECRET_KEY = credentials('aws_seacret_key')  // Jenkins credential ID for secret key
+    
     }
 
     triggers {
@@ -15,19 +19,28 @@ pipeline {
 
     stages {
 
+       
         stage('Terraform Init') {
             steps {
                 script {
-                    sh 'terraform init'
+                    sh '''
+                    export AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY
+                    export AWS_SECRET_ACCESS_KEY=$AWS_SECRET_KEY
+                    terraform init
+                    '''
                 }
             }
         }
 
         // Terraform Apply
-        stage('Terraform Apply') {
+      stage('Terraform Apply') {
             steps {
                 script {
-                    sh 'terraform apply -auto-approve'
+                    sh '''
+                    export AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY
+                    export AWS_SECRET_ACCESS_KEY=$AWS_SECRET_KEY
+                    terraform apply -auto-approve
+                    '''
                 }
             }
         }
