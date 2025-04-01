@@ -57,7 +57,7 @@ $jenkins_ip ansible_ssh_user=ubuntu ansible_ssh_private_key_file=$SSH_KEY_PATH
         stage('Generate Ansible Inventory') {
             steps {
                 script {
-                    def ec2Ip = sh(script: 'terraform output -raw jenkins_server_public_ip', returnStdout: true).trim()
+                  def ec2Ip = sh(script: 'terraform output -raw jenkins_public_ip', returnStdout: true).trim()
 
                     writeFile file: 'inventory.ini', text: """
                     [jenkins]
