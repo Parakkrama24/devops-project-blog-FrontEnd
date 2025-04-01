@@ -74,7 +74,8 @@ $jenkins_ip ansible_ssh_user=ubuntu ansible_ssh_private_key_file=$SSH_KEY_PATH
 
                     writeFile file: 'inventory.ini', text: """
                     [jenkins]
-                    ${ec2Ip} ansible_user=ubuntu 
+                    ${ec2Ip}  ansible_user=ubuntu ansible_ssh_private_key_file=/var/lib/jenkins/workspace/BlogSite_project_FrontEnd/jenkinsKey.pem ansible_python_interpreter=/usr/bin/python3
+
                     """
                 }
             }
