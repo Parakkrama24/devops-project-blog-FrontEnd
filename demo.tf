@@ -1,4 +1,3 @@
-
 variable "AWS_ACCESS_KEY" {
   type = string
 }
@@ -6,15 +5,29 @@ variable "AWS_ACCESS_KEY" {
 variable "AWS_SECRET_KEY" {
   type = string
 }
+
 provider "aws" {
   access_key = var.AWS_ACCESS_KEY
   secret_key = var.AWS_SECRET_KEY
   region     = "us-east-1"
 }
 
+# -----------------------------
+# Retrieve Existing Security Groups
+# -----------------------------
+data "aws_security_group" "jenkins_sg" {
+  filter {
+    name   = "group-name"
+    values = ["jenkins-security-group"]
+  }
+}
 
-
-
+data "aws_security_group" "mysql_sg" {
+  filter {
+    name   = "group-name"
+    values = ["mysql-security-group"]
+  }
+}
 
 # -----------------------------
 # Jenkins EC2 Instance
@@ -23,7 +36,7 @@ resource "aws_instance" "jenkins_server" {
   ami             = "ami-0b0ea68c435eb488d"
   instance_type   = "t2.micro"
   key_name        = "jenkinsKey"
-  security_groups = [aws_security_group.jenkins_sg.name, aws_security_group.mysql_sg.name]
+  security_groups = [data.aws_security_group.jenkins_sg.name, data.aws_security_group.mysql_sg.name]
 
   user_data = <<-EOF
   #!/bin/bash
@@ -43,72 +56,29 @@ resource "aws_instance" "jenkins_server" {
 }
 
 # -----------------------------
-# Jenkins Security Group
+# Retrieve Existing RDS Instance
 # -----------------------------
-resource "aws_security_group" "jenkins_sg" {
-  name        = "jenkins-security-group"
-  description = "Allow SSH and Jenkins traffic"
-
-  ingress {
-    from_port   = 22
-    to_port     = 22
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]  # Change to your IP for security
-  }
-
-  ingress {
-    from_port   = 8080
-    to_port     = 8080
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]  # Change to your IP if needed
-  }
-
-  egress {
-    from_port   = 0
-    to_port     = 0
-    protocol    = "-1"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
+data "aws_db_instance" "mysql_db" {
+  db_instance_identifier = "jenkins-mysql-db"
 }
 
 # -----------------------------
-# MySQL Security Group
-# -----------------------------
-resource "aws_security_group" "mysql_sg" {
-  name        = "mysql-security-group"
-  description = "Allow MySQL access"
-
-  ingress {
-    from_port   = 3306
-    to_port     = 3306
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]  # Change to your IP for security
-  }
-
-  egress {
-    from_port   = 0
-    to_port     = 0
-    protocol    = "-1"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-}
-
-# -----------------------------
-# MySQL RDS Database
+# If RDS does not exist, create it
 # -----------------------------
 resource "aws_db_instance" "mysql_db" {
-  allocated_storage    = 20
-  storage_type         = "gp2"
-  engine               = "mysql"
-  engine_version       = "8.0.32"  # Updated to a supported version
-  instance_class       = "db.t3.micro"  # Updated to t3.micro
-  identifier           = "jenkins-mysql-db"
-  db_name              = "jenkinsdb"  # Added db_name
-  username             = "admin"
-  password             = "StrongPassword123!" # Change this to a secure password
-  publicly_accessible  = false
-  skip_final_snapshot  = true
-  vpc_security_group_ids = [aws_security_group.mysql_sg.id]
+  count               = length(data.aws_db_instance.mysql_db.id) > 0 ? 0 : 1
+  allocated_storage   = 20
+  storage_type        = "gp2"
+  engine             = "mysql"
+  engine_version      = "8.0.32"
+  instance_class      = "db.t3.micro"
+  identifier         = "jenkins-mysql-db"
+  db_name           = "jenkinsdb"
+  username         = "admin"
+  password         = "StrongPassword123!"
+  publicly_accessible = false
+  skip_final_snapshot = true
+  vpc_security_group_ids = [data.aws_security_group.mysql_sg.id]
 
   tags = {
     Name = "Jenkins-MySQL-DB"
