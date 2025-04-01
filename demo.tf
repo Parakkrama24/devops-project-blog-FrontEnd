@@ -40,7 +40,7 @@ resource "aws_instance" "jenkins_server" {
   EOF
 
   tags = {
-    Name = "Python-Server"
+    Name = "Server"
   }
 }
 
