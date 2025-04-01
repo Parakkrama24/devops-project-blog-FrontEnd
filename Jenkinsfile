@@ -10,7 +10,7 @@ pipeline {
 
         AWS_ACCESS_KEY = credentials('aws_access_key')   // Jenkins credential ID for access key
         AWS_SECRET_KEY = credentials('aws_seacret_key')  // Jenkins credential ID for secret key
-        //SSH_KEY_PATH = '/root/jenkinsKey.pem' // Ensure correct path to the .pem file
+        SSH_KEY_PATH = '/root/jenkinsKey.pem' // Ensure correct path to the .pem file
     }
 
     triggers {
