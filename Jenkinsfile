@@ -71,7 +71,7 @@ $jenkins_ip ansible_ssh_user=ubuntu ansible_ssh_private_key_file=$SSH_KEY_PATH
     steps {
         script {
             sh '''
-            cd $WORKSPACE  # Ensure you are in the correct directory
+            mv ~/ansible/playbook.yml $WORKSPACE/  # Ensure playbook is in workspace
             ansible-playbook -i inventory.ini \
                 --private-key=$SSH_KEY_PATH \
                 playbook.yml
@@ -79,7 +79,6 @@ $jenkins_ip ansible_ssh_user=ubuntu ansible_ssh_private_key_file=$SSH_KEY_PATH
         }
     }
 }
-
 
         stage('Checkout Code') {
             steps {
