@@ -30,6 +30,9 @@ resource "aws_instance" "jenkins_server" {
   sudo add-apt-repository -y ppa:deadsnakes/ppa
   sudo apt update -y
   sudo apt install -y python3.12 python3.12-venv python3.12-dev
+
+  # Set Python 3.12 as the default version
+  sudo update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.12 1
   sudo update-alternatives --config python3 <<< "1"
 
   # Verify installation
