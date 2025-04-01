@@ -71,7 +71,7 @@ $jenkins_ip ansible_ssh_user=ubuntu ansible_ssh_private_key_file=$SSH_KEY_PATH
     steps {
         script {
             sh '''
-            mv ~/ansible/playbook.yml $WORKSPACE/  # Ensure playbook is in workspace
+            sudo cp /root/ansible/playbook.yml $WORKSPACE/  # Copy playbook from /root/ansible
             ansible-playbook -i inventory.ini \
                 --private-key=$SSH_KEY_PATH \
                 playbook.yml
