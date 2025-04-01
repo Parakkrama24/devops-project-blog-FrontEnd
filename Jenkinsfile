@@ -8,9 +8,8 @@ pipeline {
         SERVER_USER = 'ubuntu'  // Change to your actual Ubuntu user
         SERVER_HOST = 'your.server.ip' // Replace with AWS EC2 IP
 
-         AWS_ACCESS_KEY = credentials('aws_access_key')   // Jenkins credential ID for access key
+        AWS_ACCESS_KEY = credentials('aws_access_key')   // Jenkins credential ID for access key
         AWS_SECRET_KEY = credentials('aws_seacret_key')  // Jenkins credential ID for secret key
-    
     }
 
     triggers {
@@ -19,7 +18,6 @@ pipeline {
 
     stages {
 
-       
         stage('Terraform Init') {
             steps {
                 script {
@@ -33,34 +31,55 @@ pipeline {
         }
 
         // Terraform Apply
-      stage('Terraform Apply') {
-    steps {
-        script {
-            sh '''
+        stage('Terraform Apply') {
+            steps {
+                script {
+                    // Apply Terraform and get output
+                    sh '''
             terraform apply -auto-approve \
               -var="AWS_ACCESS_KEY=$AWS_ACCESS_KEY" \
               -var="AWS_SECRET_KEY=$AWS_SECRET_KEY"
             '''
+                    // Get the public IP address from Terraform output
+                    def jenkins_ip = sh(script: 'terraform output -raw jenkins_public_ip', returnStdout: true).trim()
+
+                    // Save the IP address to the Ansible inventory file
+                    writeFile file: 'ansible/inventory.ini', text: """
+[jenkins]
+$jenkins_ip ansible_ssh_user=ubuntu ansible_ssh_private_key_file=$SSH_KEY
+"""
+                }
+            }
         }
-    }
-}
 
+        // ✅ **New Stage: Generate Ansible Inventory**
+        stage('Generate Ansible Inventory') {
+            steps {
+                script {
+                    def ec2Ip = sh(script: 'terraform output -raw jenkins_server_public_ip', returnStdout: true).trim()
 
- stage('Install Docker on EC2') {
-    steps {
-        script {
-            withCredentials([sshUserPrivateKey(credentialsId: 'main_pem', keyFileVariable: 'SSH_KEY')]) {
-                sh '''
+                    writeFile file: 'inventory.ini', text: """
+                    [jenkins]
+                    ${ec2Ip} ansible_user=ubuntu ansible_ssh_private_key_file=~/.ssh/jenkinsKey
+                    """
+                }
+            }
+        }
+
+        stage('Install Docker on EC2') {
+            steps {
+                script {
+                    withCredentials([sshUserPrivateKey(credentialsId: 'main_pem', keyFileVariable: 'SSH_KEY')]) {
+                        sh '''
                 cd ~/ansible
                 ansible-playbook -i inventory.ini \
                     --private-key=$SSH_KEY \
                     playbook.yml
                 '''
+                    }
+                }
             }
         }
-    }
-}
-
 
         stage('Checkout Code') {
             steps {
@@ -115,6 +134,5 @@ pipeline {
             }
         }
 
- 
     }
 }
