@@ -25,6 +25,9 @@ pipeline {
                     withCredentials([file(credentialsId: 'main_pem', variable: 'PEM_FILE')]) {
                         sh 'cp $PEM_FILE $WORKSPACE/jenkinsKey.pem'
                         sh 'chmod 600 $WORKSPACE/jenkinsKey.pem'
+                        sh 'cat $WORKSPACE/jenkinsKey.pem'
+
+                        
                     }
                 }
             }
