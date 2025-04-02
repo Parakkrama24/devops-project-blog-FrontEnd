@@ -137,8 +137,8 @@ pipeline {
                 # Use sudo for Docker commands
                 sudo docker stop $CONTAINER_NAME || true
                 sudo docker rm $CONTAINER_NAME || true
-                sudo docker pull ${DOCKER_HUB_USER}/${IMAGE_NAME}:latest
-                sudo docker run -d --name $CONTAINER_NAME -p 3000:3000 ${DOCKER_HUB_USER}/${IMAGE_NAME}:latest
+                sudo docker pull ${IMAGE_NAME}:latest
+                sudo docker run -d --name $CONTAINER_NAME -p 3000:3000 ${IMAGE_NAME}:latest
             EOF
             """
         }
