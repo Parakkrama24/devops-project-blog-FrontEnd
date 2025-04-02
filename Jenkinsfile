@@ -122,28 +122,33 @@ pipeline {
             }
         }
 
-      stage('Deploy to EC2 using SSH') {
+      stage('Deploy with Docker Compose on EC2') {
     steps {
         script {
-            def ec2Ip = readFile('server_host.txt').trim()  // ✅ Read EC2 IP from the file
-
+            def ec2Ip = readFile('server_host.txt').trim()  // Read EC2 IP from the file
+            
+            // Copy docker-compose.yml to EC2 instance
             sh """
-            ssh -o StrictHostKeyChecking=no -i $WORKSPACE/jenkinsKey.pem $SERVER_USER@${ec2Ip} 'bash -s' << 'EOF'
-sudo apt update -y
-sudo apt install -y docker.io docker-compose
-sudo systemctl start docker
-sudo systemctl enable docker
-
-# Use sudo for Docker commands
-sudo docker stop $CONTAINER_NAME || true
-sudo docker rm $CONTAINER_NAME || true
-sudo docker pull ${IMAGE_NAME}:latest
-sudo docker run -d --name $CONTAINER_NAME -p 3000:3000 ${IMAGE_NAME}:latest
-EOF
+            scp -o StrictHostKeyChecking=no -i $WORKSPACE/jenkinsKey.pem docker-compose.yml $SERVER_USER@${ec2Ip}:/home/$SERVER_USER/
+            """
+            
+            // SSH into EC2 and run docker-compose
+            sh """
+            ssh -o StrictHostKeyChecking=no -i $WORKSPACE/jenkinsKey.pem $SERVER_USER@${ec2Ip} << 'EOF'
+                sudo apt update -y
+                sudo apt install -y docker-compose
+                
+                # Navigate to the directory where docker-compose.yml is located
+                cd /home/$SERVER_USER
+                
+                # Run docker-compose up
+                sudo docker-compose up -d
+            EOF
             """
         }
     }
 }
+
 
 
 
