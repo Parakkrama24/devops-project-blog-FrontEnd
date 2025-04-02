@@ -22,8 +22,8 @@ export default function PopupCard({ type, onClose }) {
       console.log("Submitting data:", formData);
       const endpoint =
         type === "SignUp"
-          ? "http://34.227.75.244:3000/auth/signup"
-          : "http://34.227.75.244:3000/auth/sign-in";
+          ? "http://localhost:7070/auth/signup"
+          : "http://localhost:7070/auth/sign-in";
 
       const response = await axios.post(endpoint, formData);
 
