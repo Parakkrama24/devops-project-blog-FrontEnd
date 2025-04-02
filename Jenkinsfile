@@ -122,7 +122,7 @@ pipeline {
             }
         }
 
-       stage('Deploy to EC2 using SSH') {
+      stage('Deploy to EC2 using SSH') {
     steps {
         script {
             def ec2Ip = readFile('server_host.txt').trim()  // ✅ Read EC2 IP from the file
@@ -137,13 +137,14 @@ pipeline {
                 # Use sudo for Docker commands
                 sudo docker stop $CONTAINER_NAME || true
                 sudo docker rm $CONTAINER_NAME || true
-                sudo docker pull ${DOCKER_HUB_USERNAME}/${IMAGE_NAME}:latest
-                sudo docker run -d --name $CONTAINER_NAME -p 3000:3000 ${DOCKER_HUB_USERNAME}/${IMAGE_NAME}:latest
+                sudo docker pull ${DOCKER_HUB_USER}/${IMAGE_NAME}:latest
+                sudo docker run -d --name $CONTAINER_NAME -p 3000:3000 ${DOCKER_HUB_USER}/${IMAGE_NAME}:latest
             EOF
             """
         }
     }
 }
+
 
 
     }
