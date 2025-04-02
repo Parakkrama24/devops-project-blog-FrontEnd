@@ -2,7 +2,7 @@ version: "3.8"
 
 services:
   vite:
-    image: parakkrama/frontend
+    image: /frontend
     container_name: vite-container
     ports:
       - "3000:3000"
@@ -24,7 +24,7 @@ services:
       - my-network
 
   spring-boot:
-    image: parakkrama/blog-backend:41
+    image: /blog-backend:41
     container_name: spring-boot-container
     restart: always
     ports:
