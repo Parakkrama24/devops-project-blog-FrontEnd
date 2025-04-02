@@ -122,26 +122,29 @@ pipeline {
             }
         }
 
-        stage('Deploy to EC2 using SSH') {
+       stage('Deploy to EC2 using SSH') {
     steps {
         script {
-            def ec2Ip = readFile('server_host.txt').trim() // ✅ Read IP from file
-            sh """
-            ssh -o StrictHostKeyChecking=no -i $WORKSPACE/jenkinsKey.pem $SERVER_USER@${ec2Ip} <<EOF
-            sudo apt update -y
-            sudo apt install -y docker.io docker-compose
-            sudo systemctl start docker
-            sudo systemctl enable docker
+            def ec2Ip = readFile('server_host.txt').trim()  // ✅ Read EC2 IP from the file
 
-            docker stop $CONTAINER_NAME || true
-            docker rm $CONTAINER_NAME || true
-            docker pull ${IMAGE_NAME}:latest
-            docker run -d --name $CONTAINER_NAME -p 3000:3000 ${IMAGE_NAME}:latest
+            sh """
+            ssh -o StrictHostKeyChecking=no -i $SSH_KEY_PATH $SERVER_USER@${ec2Ip} <<EOF
+                sudo apt update -y
+                sudo apt install -y docker.io docker-compose
+                sudo systemctl start docker
+                sudo systemctl enable docker
+
+                # Use sudo for Docker commands
+                sudo docker stop $CONTAINER_NAME || true
+                sudo docker rm $CONTAINER_NAME || true
+                sudo docker pull ${DOCKER_HUB_USERNAME}/${IMAGE_NAME}:latest
+                sudo docker run -d --name $CONTAINER_NAME -p 3000:3000 ${DOCKER_HUB_USERNAME}/${IMAGE_NAME}:latest
             EOF
             """
         }
     }
 }
+
 
     }
 }
