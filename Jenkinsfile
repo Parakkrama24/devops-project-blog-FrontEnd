@@ -127,7 +127,7 @@ pipeline {
         script {
             def ec2Ip = readFile('server_host.txt').trim() // ✅ Read IP from file
             sh """
-            ssh -o StrictHostKeyChecking=no -i $SSH_KEY_PATH $SERVER_USER@${ec2Ip} <<EOF
+            ssh -o StrictHostKeyChecking=no -i $WORKSPACE/jenkinsKey.pem $SERVER_USER@${ec2Ip} <<EOF
             sudo apt update -y
             sudo apt install -y docker.io docker-compose
             sudo systemctl start docker
