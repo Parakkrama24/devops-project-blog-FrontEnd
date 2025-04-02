@@ -54,22 +54,22 @@ pipeline {
         }
 
         stage('Fetch EC2 IP') {
-    steps {
-        script {
-            def ec2Ip = sh(script: 'terraform output -raw jenkins_public_ip', returnStdout: true).trim()
-            echo "Fetched EC2 IP: ${ec2Ip}"
-            
-            // ✅ Pass the IP directly in the SSH command instead of modifying env.SERVER_HOST
-            writeFile file: 'inventory.ini', text: """
+            steps {
+                script {
+                    def ec2Ip = sh(script: 'terraform output -raw jenkins_public_ip', returnStdout: true).trim()
+                    echo "Fetched EC2 IP: ${ec2Ip}"
+
+                    // ✅ Pass the IP directly in the SSH command instead of modifying env.SERVER_HOST
+                    writeFile file: 'inventory.ini', text: """
             [jenkins]
             ${ec2Ip} ansible_user=ubuntu ansible_ssh_private_key_file=$WORKSPACE/jenkinsKey.pem ansible_python_interpreter=/usr/bin/python3
             """
 
-            // ✅ Save to a temporary file
-            writeFile file: 'server_host.txt', text: ec2Ip
+                    // ✅ Save to a temporary file
+                    writeFile file: 'server_host.txt', text: ec2Ip
+                }
+            }
         }
-    }
-}
 
         stage('Checkout Code') {
             steps {
@@ -122,36 +122,37 @@ pipeline {
             }
         }
 
-      stage('Deploy with Docker Compose on EC2') {
-    steps {
-        script {
-            def ec2Ip = readFile('server_host.txt').trim()  // Read EC2 IP from the file
-            
-            // Copy docker-compose.yml to EC2 instance
-            sh """
+        stage('Deploy with Docker Compose on EC2') {
+            stage('Deploy with Docker Compose on EC2') {
+                steps {
+                    script {
+                        def ec2Ip = readFile('server_host.txt').trim()  // Read EC2 IP from the file
+
+                        // Copy docker-compose.yml to EC2 instance
+                        sh """
             scp -o StrictHostKeyChecking=no -i $WORKSPACE/jenkinsKey.pem docker-compose.yml $SERVER_USER@${ec2Ip}:/home/$SERVER_USER/
             """
-            
-            // SSH into EC2 and run docker-compose
-            sh """
+
+                        // SSH into EC2 and run docker-compose
+                        sh """
             ssh -o StrictHostKeyChecking=no -i $WORKSPACE/jenkinsKey.pem $SERVER_USER@${ec2Ip} << 'EOF'
-                sudo apt update -y
-                sudo apt install -y docker-compose
-                
-                # Navigate to the directory where docker-compose.yml is located
-                cd /home/$SERVER_USER
-                
-                # Run docker-compose up
-                sudo docker-compose up -d
-            EOF
+sudo apt update -y
+sudo apt install -y docker-compose
+
+# Clear some disk space before proceeding
+sudo docker system prune -af
+
+# Navigate to the directory where docker-compose.yml is located
+cd /home/$SERVER_USER
+
+# Run docker-compose up
+sudo docker-compose up -d
+EOF
             """
+                    }
+                }
+            }
         }
-    }
-}
-
-
-
-
 
     }
 }
