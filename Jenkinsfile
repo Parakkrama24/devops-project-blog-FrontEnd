@@ -121,15 +121,19 @@ pipeline {
                 }
             }
         }
-
-      stage('Deploy with Docker Compose on EC2') {
+stage('Deploy with Docker Compose on EC2') {
     steps {
         script {
             def ec2Ip = readFile('server_host.txt').trim()  // Read EC2 IP from the file
             
-            // Copy docker-compose.yml to EC2 instance
+            // Test SSH connectivity first
             sh """
-            scp -o StrictHostKeyChecking=no -i $WORKSPACE/jenkinsKey.pem docker-compose.yml $SERVER_USER@${ec2Ip}:/home/$SERVER_USER/
+            ssh -o StrictHostKeyChecking=no -i $WORKSPACE/jenkinsKey.pem -v $SERVER_USER@${ec2Ip} 'echo "SSH connection successful"'
+            """
+            
+            // Copy docker-compose.yml to EC2 instance with verbose output
+            sh """
+            scp -v -o StrictHostKeyChecking=no -i $WORKSPACE/jenkinsKey.pem docker-compose.yml $SERVER_USER@${ec2Ip}:/home/$SERVER_USER/
             """
             
             // SSH into EC2 and run docker-compose
