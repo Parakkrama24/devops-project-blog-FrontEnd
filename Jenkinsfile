@@ -5,12 +5,12 @@ pipeline {
         DOCKER_HUB_USER = 'parakkrama'
         IMAGE_NAME = 'parakkrama/frontend'
         CONTAINER_NAME = 'react_frontend'
-        SERVER_USER = 'ubuntu'  // Change to your actual Ubuntu user
-        SERVER_HOST = 'your.server.ip' // Replace with AWS EC2 IP
+        SERVER_USER = 'ubuntu'
+        SERVER_HOST = ''
 
-        AWS_ACCESS_KEY = credentials('aws_access_key')   // Jenkins credential ID for access key
-        AWS_SECRET_KEY = credentials('aws_seacret_key')  // Jenkins credential ID for secret key
-        SSH_KEY_PATH = '/root/jenkinsKey.pem' // Ensure correct path to the .pem file
+        AWS_ACCESS_KEY = credentials('aws_access_key')
+        AWS_SECRET_KEY = credentials('aws_seacret_key')
+        SSH_KEY_PATH = '/root/jenkinsKey.pem'
     }
 
     triggers {
@@ -18,20 +18,17 @@ pipeline {
     }
 
     stages {
-
-         stage('Copy Secret File') {
+        stage('Copy Secret File') {
             steps {
                 script {
                     withCredentials([file(credentialsId: 'main_pem', variable: 'PEM_FILE')]) {
                         sh 'cp $PEM_FILE $WORKSPACE/jenkinsKey.pem'
                         sh 'chmod 600 $WORKSPACE/jenkinsKey.pem'
-                        sh 'cat $WORKSPACE/jenkinsKey.pem'
-
-                        
                     }
                 }
             }
-         }
+        }
+
         stage('Terraform Init') {
             steps {
                 script {
@@ -44,58 +41,31 @@ pipeline {
             }
         }
 
-        // Terraform Apply
         stage('Terraform Apply') {
             steps {
                 script {
-                    // Apply Terraform and get output
                     sh '''
-            terraform apply -auto-approve \
-              -var="AWS_ACCESS_KEY=$AWS_ACCESS_KEY" \
-              -var="AWS_SECRET_KEY=$AWS_SECRET_KEY"
-            '''
-                    // Get the public IP address from Terraform output
-                    def jenkins_ip = sh(script: 'terraform output -raw jenkins_public_ip', returnStdout: true).trim()
- 
-                    // Save the IP address to the Ansible inventory file
-                    writeFile file: 'ansible/inventory.ini', text: """
-[jenkins]
-$jenkins_ip ansible_ssh_user=ubuntu ansible_ssh_private_key_file=$SSH_KEY_PATH
-"""
+                    terraform apply -auto-approve \
+                        -var="AWS_ACCESS_KEY=$AWS_ACCESS_KEY" \
+                        -var="AWS_SECRET_KEY=$AWS_SECRET_KEY"
+                    '''
                 }
             }
         }
 
-        // ✅ **New Stage: Generate Ansible Inventory**
-        stage('Generate Ansible Inventory') {
+        stage('Fetch EC2 IP') {
             steps {
                 script {
-                  def ec2Ip = sh(script: 'terraform output -raw jenkins_public_ip', returnStdout: true).trim()
+                    def ec2Ip = sh(script: 'terraform output -raw jenkins_public_ip', returnStdout: true).trim()
+                    env.SERVER_HOST = ec2Ip
 
                     writeFile file: 'inventory.ini', text: """
                     [jenkins]
-                    ${ec2Ip}  ansible_user=ubuntu ansible_ssh_private_key_file=/var/lib/jenkins/workspace/BlogSite_project_FrontEnd/jenkinsKey.pem ansible_python_interpreter=/usr/bin/python3
-
+                    ${ec2Ip} ansible_user=ubuntu ansible_ssh_private_key_file=$WORKSPACE/jenkinsKey.pem ansible_python_interpreter=/usr/bin/python3
                     """
                 }
             }
         }
-
-     stage('Install Docker on EC2') {
-    steps {
-        script {
-            sh '''
-            sudo cp /root/ansible/playbook.yml $WORKSPACE/  # Copy playbook from /root/ansible
-
-            export ANSIBLE_HOST_KEY_CHECKING=False
-
-            ansible-playbook -i inventory.ini \
-                --private-key=$WORKSPACE/jenkinsKey.pem \
-                playbook.yml
-            '''
-        }
-    }
-}
 
         stage('Checkout Code') {
             steps {
@@ -105,9 +75,7 @@ $jenkins_ip ansible_ssh_user=ubuntu ansible_ssh_private_key_file=$SSH_KEY_PATH
 
         stage('Install Dependencies') {
             steps {
-                sh '''
-                    npm install
-                '''
+                sh 'npm install'
             }
         }
 
@@ -120,8 +88,8 @@ $jenkins_ip ansible_ssh_user=ubuntu ansible_ssh_private_key_file=$SSH_KEY_PATH
         stage('Build Docker Image') {
             steps {
                 script {
-                    def imageTag = "${env.IMAGE_NAME}:${env.BUILD_NUMBER}"
-                    def latestTag = "${env.IMAGE_NAME}:latest"
+                    def imageTag = "${IMAGE_NAME}:${BUILD_NUMBER}"
+                    def latestTag = "${IMAGE_NAME}:latest"
 
                     sh "docker build -t ${imageTag} -t ${latestTag} ."
                 }
@@ -141,8 +109,8 @@ $jenkins_ip ansible_ssh_user=ubuntu ansible_ssh_private_key_file=$SSH_KEY_PATH
         stage('Push Docker Image') {
             steps {
                 script {
-                    def imageTag = "${env.IMAGE_NAME}:${env.BUILD_NUMBER}"
-                    def latestTag = "${env.IMAGE_NAME}:latest"
+                    def imageTag = "${IMAGE_NAME}:${BUILD_NUMBER}"
+                    def latestTag = "${IMAGE_NAME}:latest"
 
                     sh "docker push ${imageTag}"
                     sh "docker push ${latestTag}"
@@ -150,5 +118,24 @@ $jenkins_ip ansible_ssh_user=ubuntu ansible_ssh_private_key_file=$SSH_KEY_PATH
             }
         }
 
+        stage('Deploy to EC2 using SSH') {
+            steps {
+                script {
+                    sh """
+                    ssh -o StrictHostKeyChecking=no -i $SSH_KEY_PATH $SERVER_USER@$SERVER_HOST <<EOF
+                    sudo apt update -y
+                    sudo apt install -y docker.io docker-compose
+                    sudo systemctl start docker
+                    sudo systemctl enable docker
+
+                    docker stop $CONTAINER_NAME || true
+                    docker rm $CONTAINER_NAME || true
+                    docker pull ${IMAGE_NAME}:latest
+                    docker run -d --name $CONTAINER_NAME -p 3000:3000 ${IMAGE_NAME}:latest
+                    EOF
+                    """
+                }
+            }
+        }
     }
 }
