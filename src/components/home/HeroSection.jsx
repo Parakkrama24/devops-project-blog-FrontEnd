@@ -11,7 +11,7 @@ export default function HeroSection() {
           The future of technology is shaping a smarter, more connected world,
           where AI transforms everyday life. Imagine devices that anticipate
           your needs, immersive virtual experiences, and breakthroughs that
-          redefine innovation—all at your fingertips.
+          redefine innovation—all at your .
         </p>
         
         <button className="read-more">Read more</button>
