@@ -54,22 +54,22 @@ pipeline {
         }
 
         stage('Fetch EC2 IP') {
-            steps {
-                script {
-                    def ec2Ip = sh(script: 'terraform output -raw jenkins_public_ip', returnStdout: true).trim()
-                    echo "Fetched EC2 IP: ${ec2Ip}"
-
-                    // ✅ Pass the IP directly in the SSH command instead of modifying env.SERVER_HOST
-                    writeFile file: 'inventory.ini', text: """
+    steps {
+        script {
+            def ec2Ip = sh(script: 'terraform output -raw jenkins_public_ip', returnStdout: true).trim()
+            echo "Fetched EC2 IP: ${ec2Ip}"
+            
+            // ✅ Pass the IP directly in the SSH command instead of modifying env.SERVER_HOST
+            writeFile file: 'inventory.ini', text: """
             [jenkins]
             ${ec2Ip} ansible_user=ubuntu ansible_ssh_private_key_file=$WORKSPACE/jenkinsKey.pem ansible_python_interpreter=/usr/bin/python3
             """
 
-                    // ✅ Save to a temporary file
-                    writeFile file: 'server_host.txt', text: ec2Ip
-                }
-            }
+            // ✅ Save to a temporary file
+            writeFile file: 'server_host.txt', text: ec2Ip
         }
+    }
+}
 
         stage('Checkout Code') {
             steps {
@@ -123,28 +123,25 @@ pipeline {
         }
 
         stage('Deploy to EC2 using SSH') {
-            stage('Deploy to EC2 using SSH') {
-                steps {
-                    script {
-                        def ec2Ip = readFile('server_host.txt').trim()  // ✅ Read EC2 IP from the file
+    steps {
+        script {
+            def ec2Ip = readFile('server_host.txt').trim() // ✅ Read IP from file
+            sh """
+            ssh -o StrictHostKeyChecking=no -i $WORKSPACE/jenkinsKey.pem $SERVER_USER@${ec2Ip} <<EOF
+            sudo apt update -y
+            sudo apt install -y docker.io docker-compose
+            sudo systemctl start docker
+            sudo systemctl enable docker
 
-                        sh """
-            ssh -o StrictHostKeyChecking=no -i $SSH_KEY_PATH $SERVER_USER@${ec2Ip} <<EOF
-                sudo apt update -y
-                sudo apt install -y docker.io docker-compose
-                sudo systemctl start docker
-                sudo systemctl enable docker
-
-                # Use sudo for Docker commands
-                sudo docker stop $CONTAINER_NAME || true
-                sudo docker rm $CONTAINER_NAME || true
-                sudo docker pull ${DOCKER_HUB_USERNAME}/${IMAGE_NAME}:latest
-                sudo docker run -d --name $CONTAINER_NAME -p 3000:3000 ${DOCKER_HUB_USERNAME}/${IMAGE_NAME}:latest
+            docker stop $CONTAINER_NAME || true
+            docker rm $CONTAINER_NAME || true
+            docker pull ${IMAGE_NAME}:latest
+            docker run -d --name $CONTAINER_NAME -p 3000:3000 ${IMAGE_NAME}:latest
             EOF
             """
-                    }
-                }
-            }
         }
+    }
+}
+
     }
 }
